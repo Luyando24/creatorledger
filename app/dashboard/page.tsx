@@ -15,17 +15,20 @@ import {
     Search,
     Menu,
     X,
-    ArrowUpRight,
-    ArrowDownRight,
-    Users,
-    Video
+    ChevronDown
 } from 'lucide-react';
+import OverviewView from './views/OverviewView';
+import RevenueView from './views/RevenueView';
+import SettingsView from './views/SettingsView';
+import { CURRENCIES } from './constants';
 
 export default function DashboardPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [activeView, setActiveView] = useState('Overview');
+    const [currency, setCurrency] = useState('USD');
 
     useEffect(() => {
         checkUser();
@@ -55,11 +58,38 @@ export default function DashboardPage() {
             }
 
             setUser(session.user);
+            
+            // Fetch user profile/settings
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('currency')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile?.currency) {
+                setCurrency(profile.currency);
+            }
         } catch (error) {
             console.error('Error checking auth:', error);
             router.push('/login');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const updateCurrency = async (newCurrency: string) => {
+        try {
+            setCurrency(newCurrency);
+            
+            const { error } = await supabase
+                .from('profiles')
+                .update({ currency: newCurrency })
+                .eq('id', user.id);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error updating currency:', error);
+            // Revert on error if needed, but for now just log
         }
     };
 
@@ -77,71 +107,36 @@ export default function DashboardPage() {
     }
 
     const menuItems = [
-        { icon: LayoutDashboard, label: 'Overview', active: true },
-        { icon: DollarSign, label: 'Revenue', active: false },
-        { icon: PieChart, label: 'Analytics', active: false },
-        { icon: Briefcase, label: 'Brand Deals', active: false },
-        { icon: Settings, label: 'Settings', active: false },
+        { icon: LayoutDashboard, label: 'Overview' },
+        { icon: DollarSign, label: 'Revenue' },
+        { icon: PieChart, label: 'Analytics' },
+        { icon: Briefcase, label: 'Brand Deals' },
+        { icon: Settings, label: 'Settings' },
     ];
 
-    const stats = [
-        {
-            title: 'Total Revenue',
-            value: '$12,450',
-            change: '+12.5%',
-            trend: 'up',
-            icon: DollarSign,
-            color: 'bg-emerald-500/20 text-emerald-400'
-        },
-        {
-            title: 'Active Deals',
-            value: '8',
-            change: '+2',
-            trend: 'up',
-            icon: Briefcase,
-            color: 'bg-blue-500/20 text-blue-400'
-        },
-        {
-            title: 'Total Followers',
-            value: '85.2k',
-            change: '+5.4%',
-            trend: 'up',
-            icon: Users,
-            color: 'bg-purple-500/20 text-purple-400'
-        },
-        {
-            title: 'Engagement Rate',
-            value: '4.8%',
-            change: '-0.2%',
-            trend: 'down',
-            icon: TrendingUp,
-            color: 'bg-orange-500/20 text-orange-400'
+    const renderView = () => {
+        switch (activeView) {
+            case 'Overview':
+                return <OverviewView currency={currency} />;
+            case 'Revenue':
+                return <RevenueView currency={currency} />;
+            case 'Settings':
+                return <SettingsView />;
+            default:
+                return (
+                    <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+                        <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
+                            <Settings className="w-8 h-8 text-slate-500" />
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2">Coming Soon</h2>
+                        <p className="text-slate-400 max-w-md">
+                            The {activeView} dashboard is currently under development. 
+                            Check back soon for updates!
+                        </p>
+                    </div>
+                );
         }
-    ];
-
-    const recentActivity = [
-        {
-            title: 'New Brand Deal Proposal',
-            company: 'TechStart Inc.',
-            amount: '$2,500',
-            time: '2 hours ago',
-            type: 'deal'
-        },
-        {
-            title: 'Payment Received',
-            company: 'Fashion Weekly',
-            amount: '$1,200',
-            time: '5 hours ago',
-            type: 'payment'
-        },
-        {
-            title: 'Video Performance Alert',
-            company: 'Viral Tech Review',
-            amount: '10k views',
-            time: '1 day ago',
-            type: 'content'
-        }
-    ];
+    };
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex">
@@ -173,8 +168,12 @@ export default function DashboardPage() {
                         {menuItems.map((item) => (
                             <button
                                 key={item.label}
+                                onClick={() => {
+                                    setActiveView(item.label);
+                                    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                                }}
                                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                                    item.active
+                                    activeView === item.label
                                         ? 'bg-teal-500/10 text-teal-400'
                                         : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}
@@ -229,6 +228,21 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center space-x-4">
+                        <div className="relative hidden sm:block">
+                            <select
+                                value={currency}
+                                onChange={(e) => updateCurrency(e.target.value)}
+                                className="appearance-none bg-slate-800 border border-slate-700 text-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                            >
+                                {CURRENCIES.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.code} ({c.symbol})
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
                         <button className="relative p-2 text-slate-400 hover:text-white transition-colors">
                             <Bell className="w-5 h-5" />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-900"></span>
@@ -238,101 +252,7 @@ export default function DashboardPage() {
 
                 {/* Dashboard Content */}
                 <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="mb-8">
-                            <h1 className="text-2xl font-bold text-white mb-2">Dashboard Overview</h1>
-                            <p className="text-slate-400">Welcome back! Here's what's happening with your content today.</p>
-                        </div>
-
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-                            {stats.map((stat) => (
-                                <div key={stat.title} className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className={`p-2 rounded-lg ${stat.color}`}>
-                                            <stat.icon className="w-5 h-5" />
-                                        </div>
-                                        <span className={`flex items-center text-xs font-medium ${
-                                            stat.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
-                                        }`}>
-                                            {stat.change}
-                                            {stat.trend === 'up' ? (
-                                                <ArrowUpRight className="w-3 h-3 ml-1" />
-                                            ) : (
-                                                <ArrowDownRight className="w-3 h-3 ml-1" />
-                                            )}
-                                        </span>
-                                    </div>
-                                    <h3 className="text-slate-400 text-sm font-medium mb-1">{stat.title}</h3>
-                                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Chart Section (Placeholder) */}
-                            <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-lg font-semibold text-white">Revenue Analytics</h3>
-                                    <select className="bg-slate-800 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-1">
-                                        <option>Last 7 days</option>
-                                        <option>Last 30 days</option>
-                                        <option>Last year</option>
-                                    </select>
-                                </div>
-                                <div className="h-64 flex items-end justify-between gap-1 sm:gap-2 px-2 overflow-x-auto">
-                                    {[40, 65, 45, 80, 55, 70, 90, 60, 75, 85, 95, 60].map((height, i) => (
-                                        <div key={i} className="w-full min-w-[20px] bg-slate-800 rounded-t-sm relative group hover:bg-teal-500/20 transition-colors">
-                                            <div
-                                                className="absolute bottom-0 left-0 right-0 bg-teal-500 rounded-t-sm transition-all duration-500 group-hover:bg-teal-400"
-                                                style={{ height: `${height}%` }}
-                                            ></div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="flex justify-between mt-4 text-xs text-slate-500">
-                                    <span>Jan</span>
-                                    <span>Feb</span>
-                                    <span>Mar</span>
-                                    <span>Apr</span>
-                                    <span>May</span>
-                                    <span>Jun</span>
-                                    <span>Jul</span>
-                                    <span>Aug</span>
-                                    <span>Sep</span>
-                                    <span>Oct</span>
-                                    <span>Nov</span>
-                                    <span>Dec</span>
-                                </div>
-                            </div>
-
-                            {/* Recent Activity */}
-                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                                <h3 className="text-lg font-semibold text-white mb-6">Recent Activity</h3>
-                                <div className="space-y-6">
-                                    {recentActivity.map((activity, i) => (
-                                        <div key={i} className="flex items-start space-x-4">
-                                            <div className={`w-2 h-2 mt-2 rounded-full ${
-                                                activity.type === 'deal' ? 'bg-blue-400' :
-                                                activity.type === 'payment' ? 'bg-emerald-400' : 'bg-purple-400'
-                                            }`}></div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-white">{activity.title}</p>
-                                                <p className="text-xs text-slate-400 mt-0.5">{activity.company}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-sm font-medium text-white">{activity.amount}</p>
-                                                <p className="text-xs text-slate-500 mt-0.5">{activity.time}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button className="w-full mt-6 py-2 text-sm text-teal-400 hover:text-teal-300 font-medium transition-colors border border-dashed border-slate-700 hover:border-teal-500/50 rounded-lg">
-                                    View All Activity
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    {renderView()}
                 </main>
             </div>
         </div>
