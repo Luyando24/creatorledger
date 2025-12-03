@@ -13,9 +13,9 @@ import {
     CheckCircle,
     ArrowRight,
     Star,
-    Menu,
-    X,
-    Calendar
+    Calendar,
+    Home,
+    User
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -43,6 +43,7 @@ export default function HomePage() {
                             <span className="text-xl font-bold text-white">CreatorLedger</span>
                         </div>
 
+                        {/* Desktop Menu */}
                         <div className="hidden md:flex items-center space-x-8">
                             <Link href="#features" className="text-slate-300 hover:text-white transition">Features</Link>
                             <Link href="#pricing" className="text-slate-300 hover:text-white transition">Pricing</Link>
@@ -59,6 +60,7 @@ export default function HomePage() {
                                 </Link>
                             )}
                         </div>
+
                     </div>
                 </div>
             </nav>
@@ -74,7 +76,7 @@ export default function HomePage() {
                             <span className="text-sm text-primary-300">Trusted by 10,000+ creators worldwide</span>
                         </div>
 
-                        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
+                        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
                             Your Creator Business,
                             <br />
                             <span className="gradient-text">All In One Place</span>
@@ -217,7 +219,7 @@ export default function HomePage() {
             <section className="py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="glass rounded-2xl p-12">
-                        <div className="grid md:grid-cols-4 gap-8 text-center">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                             <div>
                                 <div className="text-4xl font-bold gradient-text mb-2">10,000+</div>
                                 <div className="text-slate-400">Active Creators</div>
@@ -403,10 +405,10 @@ export default function HomePage() {
             </section>
 
             {/* Footer */}
-            <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-white/10">
+            <footer className="py-12 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8 border-t border-white/10">
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid md:grid-cols-4 gap-8 mb-8">
-                        <div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+                        <div className="col-span-2 md:col-span-1">
                             <div className="flex items-center space-x-2 mb-4">
                                 <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
                                     <TrendingUp className="w-5 h-5 text-white" />
@@ -451,6 +453,28 @@ export default function HomePage() {
                     </div>
                 </div>
             </footer>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-white/10 z-50 px-6 py-3 pb-6">
+                <div className="flex justify-between items-center">
+                    <Link href="#" className="flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition-colors">
+                        <Home className="w-6 h-6" />
+                        <span className="text-xs font-medium">Home</span>
+                    </Link>
+                    <Link href="#features" className="flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition-colors">
+                        <Zap className="w-6 h-6" />
+                        <span className="text-xs font-medium">Features</span>
+                    </Link>
+                    <Link href="#pricing" className="flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition-colors">
+                        <DollarSign className="w-6 h-6" />
+                        <span className="text-xs font-medium">Pricing</span>
+                    </Link>
+                    <Link href={user ? "/dashboard" : "/signup"} className="flex flex-col items-center space-y-1 text-primary-400 hover:text-primary-300 transition-colors">
+                        <User className="w-6 h-6" />
+                        <span className="text-xs font-medium">{user ? "Dashboard" : "Sign Up"}</span>
+                    </Link>
+                </div>
+            </div>
         </div>
     );
 }

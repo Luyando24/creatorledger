@@ -55,7 +55,26 @@ export default function SocialsView() {
         }
     };
 
+    const handleInstagramAuth = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                console.error('User not found');
+                return;
+            }
+            
+            window.location.href = `/api/social/instagram/authorize?userId=${user.id}`;
+        } catch (error) {
+            console.error('Error initiating auth:', error);
+        }
+    };
+
     const handleAddAccount = async () => {
+        if (newAccount.platform === 'Instagram') {
+            await handleInstagramAuth();
+            return;
+        }
+
         if (!newAccount.handle) return;
 
         try {
@@ -243,21 +262,39 @@ export default function SocialsView() {
                                     <option key={p.id} value={p.id}>{p.id}</option>
                                 ))}
                             </select>
-                            <input
-                                type="text"
-                                placeholder="@handle"
-                                value={newAccount.handle}
-                                onChange={(e) => setNewAccount({ ...newAccount, handle: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500 focus:outline-none"
-                            />
+
+                            {newAccount.platform === 'Instagram' ? (
+                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-center">
+                                    <p className="text-xs text-blue-200 mb-3">
+                                        Connect your Instagram Business account via Facebook to fetch real stats.
+                                    </p>
+                                    <button
+                                        onClick={handleInstagramAuth}
+                                        className="w-full flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#1864D9] text-white text-sm font-medium py-2 rounded-lg transition-colors"
+                                    >
+                                        <Globe className="w-4 h-4" />
+                                        Connect with Facebook
+                                    </button>
+                                </div>
+                            ) : (
+                                <input
+                                    type="text"
+                                    placeholder="@handle"
+                                    value={newAccount.handle}
+                                    onChange={(e) => setNewAccount({ ...newAccount, handle: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500 focus:outline-none"
+                                />
+                            )}
                         </div>
                         <div className="flex gap-2">
-                            <button
-                                onClick={handleAddAccount}
-                                className="flex-1 bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium py-2 rounded-lg transition-colors"
-                            >
-                                Connect
-                            </button>
+                            {newAccount.platform !== 'Instagram' && (
+                                <button
+                                    onClick={handleAddAccount}
+                                    className="flex-1 bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+                                >
+                                    Connect
+                                </button>
+                            )}
                             <button
                                 onClick={() => setIsAdding(false)}
                                 className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium py-2 rounded-lg transition-colors"

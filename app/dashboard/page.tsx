@@ -262,9 +262,29 @@ export default function DashboardPage() {
                 </header>
 
                 {/* Dashboard Content */}
-                <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 lg:pb-8">
                     {renderView()}
                 </main>
+            </div>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-white/10 z-50 px-2 py-2 pb-6">
+                <div className="flex justify-around items-center">
+                    {menuItems.map((item) => (
+                        <button
+                            key={item.label}
+                            onClick={() => setActiveView(item.label)}
+                            className={`flex flex-col items-center justify-center w-full py-1 space-y-1 ${
+                                activeView === item.label
+                                    ? 'text-teal-400'
+                                    : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <item.icon className={`w-5 h-5 ${activeView === item.label ? 'fill-current/20' : ''}`} />
+                            <span className="text-[10px] font-medium truncate max-w-[60px]">{item.label}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     );
