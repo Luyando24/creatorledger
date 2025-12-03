@@ -15,10 +15,14 @@ import {
     Search,
     Menu,
     X,
-    ChevronDown
+    ChevronDown,
+    Share2
 } from 'lucide-react';
 import OverviewView from './views/OverviewView';
 import RevenueView from './views/RevenueView';
+import AnalyticsView from './views/AnalyticsView';
+import BrandDealsView from './views/BrandDealsView';
+import SocialsView from './views/SocialsView';
 import SettingsView from './views/SettingsView';
 import { CURRENCIES } from './constants';
 
@@ -111,6 +115,7 @@ export default function DashboardPage() {
         { icon: DollarSign, label: 'Revenue' },
         { icon: PieChart, label: 'Analytics' },
         { icon: Briefcase, label: 'Brand Deals' },
+        { icon: Share2, label: 'Socials' },
         { icon: Settings, label: 'Settings' },
     ];
 
@@ -120,6 +125,12 @@ export default function DashboardPage() {
                 return <OverviewView currency={currency} />;
             case 'Revenue':
                 return <RevenueView currency={currency} />;
+            case 'Analytics':
+                return <AnalyticsView currency={currency} />;
+            case 'Brand Deals':
+                return <BrandDealsView currency={currency} />;
+            case 'Socials':
+                return <SocialsView />;
             case 'Settings':
                 return <SettingsView />;
             default:

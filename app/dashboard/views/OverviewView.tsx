@@ -13,9 +13,16 @@ interface Transaction {
     created_at: string;
 }
 
+interface SocialAccount {
+    follower_count: number;
+    previous_follower_count: number;
+    engagement_rate: number;
+}
+
 export default function OverviewView({ currency }: { currency: string }) {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [followerStats, setFollowerStats] = useState({ total: 0, growth: 0, engagement: 0 });
     const symbol = CURRENCIES.find(c => c.code === currency)?.symbol || '$';
 
     useEffect(() => {
@@ -24,13 +31,40 @@ export default function OverviewView({ currency }: { currency: string }) {
 
     const fetchData = async () => {
         try {
-            const { data, error } = await supabase
+            // Fetch transactions
+            const { data: transactionsData, error: transactionsError } = await supabase
                 .from('transactions')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            setTransactions(data || []);
+            if (transactionsError) throw transactionsError;
+            setTransactions(transactionsData || []);
+
+            // Fetch social accounts
+            const { data: accountsData, error: accountsError } = await supabase
+                .from('social_accounts')
+                .select('follower_count, previous_follower_count, engagement_rate');
+
+            if (accountsError) throw accountsError;
+
+            const totalFollowers = accountsData?.reduce((sum, acc: SocialAccount) => sum + (acc.follower_count || 0), 0) || 0;
+            const previousFollowers = accountsData?.reduce((sum, acc: SocialAccount) => sum + (acc.previous_follower_count || 0), 0) || 0;
+            const totalEngagement = accountsData?.reduce((sum, acc: SocialAccount) => sum + (acc.engagement_rate || 0), 0) || 0;
+            const avgEngagement = accountsData?.length ? totalEngagement / accountsData.length : 0;
+            
+            let growth = 0;
+            if (previousFollowers > 0) {
+                growth = ((totalFollowers - previousFollowers) / previousFollowers) * 100;
+            } else if (totalFollowers > 0) {
+                growth = 100; // New growth if starting from 0
+            }
+
+            setFollowerStats({
+                total: totalFollowers,
+                growth: growth,
+                engagement: avgEngagement
+            });
+
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -43,6 +77,16 @@ export default function OverviewView({ currency }: { currency: string }) {
             style: 'currency',
             currency: currency
         });
+    };
+
+    const formatNumber = (num: number) => {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        }
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'k';
+        }
+        return num.toString();
     };
 
     // Calculate stats
@@ -68,17 +112,17 @@ export default function OverviewView({ currency }: { currency: string }) {
         },
         {
             title: 'Total Followers',
-            value: '85.2k',
-            change: '+5.4%',
-            trend: 'up',
+            value: formatNumber(followerStats.total),
+            change: `${followerStats.growth >= 0 ? '+' : ''}${followerStats.growth.toFixed(1)}%`,
+            trend: followerStats.growth >= 0 ? 'up' : 'down',
             icon: Users,
             color: 'bg-purple-500/20 text-purple-400'
         },
         {
             title: 'Engagement Rate',
-            value: '4.8%',
-            change: '-0.2%',
-            trend: 'down',
+            value: `${followerStats.engagement.toFixed(1)}%`,
+            change: '+0.0%', // Placeholder for now, need history table for real change
+            trend: 'up', // Placeholder
             icon: TrendingUp,
             color: 'bg-orange-500/20 text-orange-400'
         }
