@@ -53,13 +53,20 @@ export default function SignupPage() {
                 options: {
                     data: {
                         name: formData.name
-                    }
+                    },
+                    emailRedirectTo: `${window.location.origin}/auth/callback`
                 }
             });
 
             if (error) throw error;
 
-            // Success - redirect to dashboard or show confirmation
+            // If email confirmation is required, session will be null but user will be present
+            if (data.user && !data.session) {
+                router.push('/signup/confirmation');
+                return;
+            }
+
+            // If no email confirmation required (or auto-confirmed), go to dashboard
             router.push('/dashboard');
         } catch (error: any) {
             setError(error.message || 'An error occurred during signup');
