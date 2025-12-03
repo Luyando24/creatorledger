@@ -25,10 +25,24 @@ export default function DashboardPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
         checkUser();
+        // Close sidebar on mobile by default, open on desktop
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) {
+                setIsSidebarOpen(true);
+            } else {
+                setIsSidebarOpen(false);
+            }
+        };
+
+        // Set initial state
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const checkUser = async () => {
@@ -131,6 +145,14 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+            {/* Mobile Overlay */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <aside
                 className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-200 ease-in-out ${
@@ -223,7 +245,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
                             {stats.map((stat) => (
                                 <div key={stat.title} className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                                     <div className="flex items-start justify-between mb-4">
@@ -258,9 +280,9 @@ export default function DashboardPage() {
                                         <option>Last year</option>
                                     </select>
                                 </div>
-                                <div className="h-64 flex items-end justify-between gap-2 px-2">
+                                <div className="h-64 flex items-end justify-between gap-1 sm:gap-2 px-2 overflow-x-auto">
                                     {[40, 65, 45, 80, 55, 70, 90, 60, 75, 85, 95, 60].map((height, i) => (
-                                        <div key={i} className="w-full bg-slate-800 rounded-t-sm relative group hover:bg-teal-500/20 transition-colors">
+                                        <div key={i} className="w-full min-w-[20px] bg-slate-800 rounded-t-sm relative group hover:bg-teal-500/20 transition-colors">
                                             <div
                                                 className="absolute bottom-0 left-0 right-0 bg-teal-500 rounded-t-sm transition-all duration-500 group-hover:bg-teal-400"
                                                 style={{ height: `${height}%` }}

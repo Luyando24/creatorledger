@@ -1,4 +1,8 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import {
     TrendingUp,
     Zap,
@@ -10,10 +14,22 @@ import {
     ArrowRight,
     Star,
     Menu,
-    X
+    X,
+    Calendar
 } from 'lucide-react';
 
 export default function HomePage() {
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        checkUser();
+    }, []);
+
+    const checkUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user || null);
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
             {/* Navigation */}
@@ -31,10 +47,17 @@ export default function HomePage() {
                             <Link href="#features" className="text-slate-300 hover:text-white transition">Features</Link>
                             <Link href="#pricing" className="text-slate-300 hover:text-white transition">Pricing</Link>
                             <Link href="#testimonials" className="text-slate-300 hover:text-white transition">Testimonials</Link>
-                            <Link href="/login" className="text-slate-300 hover:text-white transition">Login</Link>
-                            <Link href="/signup" className="px-5 py-2.5 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 hover:shadow-lg hover:shadow-primary-500/30 transition-all">
-                                Get Started Free
-                            </Link>
+                            
+                            {user ? (
+                                <Link href="/dashboard" className="px-5 py-2.5 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 hover:shadow-lg hover:shadow-primary-500/30 transition-all flex items-center gap-2">
+                                    My Dashboard
+                                    <ArrowRight className="w-4 h-4" />
+                                </Link>
+                            ) : (
+                                <Link href="/signup" className="px-5 py-2.5 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 hover:shadow-lg hover:shadow-primary-500/30 transition-all">
+                                    Get Started Free
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -67,8 +90,13 @@ export default function HomePage() {
                                 Start Free Trial
                                 <ArrowRight className="w-5 h-5" />
                             </Link>
-                            <Link href="#demo" className="px-8 py-4 bg-white/10 backdrop-blur border border-white/20 text-white rounded-lg font-semibold text-lg hover:bg-white/20 transition">
-                                Watch Demo
+                            <Link 
+                                href="https://calendly.com/" 
+                                target="_blank"
+                                className="px-8 py-4 bg-white/10 backdrop-blur border border-white/20 text-white rounded-lg font-semibold text-lg hover:bg-white/20 transition flex items-center gap-2"
+                            >
+                                <Calendar className="w-5 h-5" />
+                                Book Demo
                             </Link>
                         </div>
 
